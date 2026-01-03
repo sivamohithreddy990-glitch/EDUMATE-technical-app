@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>EDUMATE Coding Zone</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f0f4f8;
+      padding: 20px;
+    }
+    h2 {
+      color: #333;
+    }
+    select, iframe {
+      margin-top: 10px;
+      width: 100%;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>👨‍💻 Welcome to EDUMATE Coding Zone</h2>
+  <p>Select your language and start coding:</p>
+
+  <select id="languageSelector" onchange="loadCompiler()">
+    <option value="https://onecompiler.com/java">Java</option>
+    <option value="https://onecompiler.com/python">Python</option>
+    <option value="https://onecompiler.com/c">C</option>
+    <option value="https://onecompiler.com/cpp">C++</option>
+    <option value="https://onecompiler.com/html">HTML/CSS/JS</option>
+    <option value="https://onecompiler.com/javascript">JavaScript</option>
+    <option value="https://onecompiler.com/sql">SQL</option>
+  </select>
+
+  <iframe id="compilerFrame" src="https://onecompiler.com/java" height="600px" frameborder="0"></iframe>
+
+  <script>
+    function loadCompiler() {
+      const selectedURL = document.getElementById("languageSelector").value;
+      document.getElementById("compilerFrame").src = selectedURL;
+    }
+  </script>
+
+</body>
+</html>

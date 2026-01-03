@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>All-in-One Calculator</title>
+<script src="https://cdn.jsdelivr.net/npm/mathjs@11.9.0/lib/browser/math.js"></script>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    margin: 0; padding: 0;
+    background: linear-gradient(135deg, #283c86, #45a247);
+    color: #fff;
+    text-align: center;
+  }
+  h1 { margin: 20px 0; font-size: 28px; }
+  .calc-box {
+    background: rgba(0,0,0,0.75);
+    padding: 20px;
+    border-radius: 15px;
+    max-width: 850px;
+    margin: auto;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+  }
+  select, input, button {
+    margin: 5px; padding: 10px;
+    border: none; border-radius: 8px;
+    font-size: 16px;
+  }
+  select, input { width: 200px; }
+  button {
+    background: #00c6ff;
+    color: #fff; cursor: pointer;
+    transition: 0.3s;
+  }
+  button:hover { background: #0072ff; }
+  .display {
+    background: #111; color: #0f0;
+    padding: 15px; font-size: 20px;
+    border-radius: 8px; margin: 10px 0;
+    text-align: right; min-height: 30px;
+  }
+  .keypad {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+  }
+  .keypad button { font-size: 18px; }
+  .section { display: none; margin-top: 15px; }
+  .result {
+    margin-top: 20px; background: #222;
+    padding: 12px; border-left: 5px solid #00eaff;
+    border-radius: 8px; min-height: 40px;
+    text-align: left;
+    word-break: break-word;
+  }
+  .matrix-grid {
+    display: grid; gap: 6px; justify-content: center;
+    margin: 10px auto;
+  }
+  h3 { color: #ffd700; }
+</style>
+</head>
+<body>
+
+<h1>✨ All-in-One Calculator ✨</h1>
+<div class="calc-box">
+  <label for="mode">Choose Mode:</label>
+  <select id="mode" onchange="switchMode()">
+    <option value="basic">Basic</option>
+    <option value="quadratic">Quadratic</option>
+    <option value="matrix">Matrix</option>
+    <option value="calculus">Calculus</option>
+  </select>
+
+  <!-- BASIC -->
+  <div id="basic" class="section">
+    <h3>Basic Calculator</h3>
+    <div id="display" class="display"></div>
+    <div class="keypad">
+      <button onclick="press('7')">7</button>
+      <button onclick="press('8')">8</button>
+      <button onclick="press('9')">9</button>
+      <button onclick="press('/')">÷</button>
+      <button onclick="press('4')">4</button>
+      <button onclick="press('5')">5</button>
+      <button onclick="press('6')">6</button>
+      <button onclick="press('*')">×</button>
+      <button onclick="press('1')">1</button>
+      <button onclick="press('2')">2</button>
+      <button onclick="press('3')">3</button>
+      <button onclick="press('-')">−</button>
+      <button onclick="press('0')">0</button>
+      <button onclick="press('.')">.</button>
+      <button onclick="calculate()">=</button>
+      <button onclick="press('+')">+</button>
+      <button onclick="clearDisplay()" style="grid-column: span 4; background:#ff4444;">Clear</button>
+    </div>
+  </div>
+
+  <!-- QUADRATIC -->
+  <div id="quadratic" class="section">
+    <h3>Quadratic Solver ax²+bx+c=0</h3>
+    <input id="qa" type="number" placeholder="a">
+    <input id="qb" type="number" placeholder="b">
+    <input id="qc" type="number" placeholder="c">
+    <button onclick="solveQuadratic()">Solve</button>
+  </div>
+
+  <!-- MATRIX -->
+  <div id="matrix" class="section">
+    <h3>Matrix Calculator</h3>
+    <label>Select Size:</label>
+    <select id="matrixSize" onchange="renderMatrices()">
+      <option value="2">2x2</option>
+      <option value="3">3x3</option>
+      <option value="4">4x4</option>
+    </select>
+
+    <br><br>
+    <label>Choose Matrices:</label>
+    <select id="matrixSet" onchange="renderMatrices()">
+      <option value="A">Only A</option>
+      <option value="B">Only B</option>
+      <option value="AB">Both A & B</option>
+    </select>
+
+    <div id="matrixInputs"></div>
+
+    <label>Select Operation:</label>
+    <select id="matrixOp">
+      <option value="add">A + B</option>
+      <option value="mul">A × B</option>
+      <option value="det">Determinant</option>
+      <option value="trans">Transpose</option>
+      <option value="inv">Inverse</option>
+      <option value="rank">Rank</option>
+    </select>
+    <br>
+    <button onclick="doMatrix()">Calculate</button>
+  </div>
+
+  <!-- CALCULUS -->
+  <div id="calculus" class="section">
+    <h3>Derivative Calculator</h3>
+    <input id="cal-fn" type="text" placeholder="Enter f(x), e.g., x^2+3x">
+    <button onclick="doDerivative()">Find f'(x)</button>
+  </div>
+
+  <!-- RESULT -->
+  <div class="result" id="result">Result will appear here</div>
+</div>
+
+<script>
+let expr = "";
+
+// Mode switching
+function switchMode(){
+  document.querySelectorAll('.section').forEach(s=>s.style.display="none");
+  const sel=document.getElementById('mode').value;
+  document.getElementById(sel).style.display="block";
+  if(sel==="matrix") renderMatrices();
+  clearDisplay();
+  document.getElementById('result').innerText="Result will appear here";
+}
+
+// BASIC
+function press(val){
+  expr += val;
+  document.getElementById("display").innerText = expr;
+}
+function calculate(){
+  try{
+    const res = math.evaluate(expr);
+    document.getElementById("result").innerText = "Result: " + res;
+    expr = res.toString();
+    document.getElementById("display").innerText = expr;
+  }catch{ document.getElementById("result").innerText="Error"; }
+}
+function clearDisplay(){
+  expr = "";
+  const disp=document.getElementById("display");
+  if(disp) disp.innerText = "";
+}
+
+// QUADRATIC
+function solveQuadratic(){
+  const a=Number(qa.value), b=Number(qb.value), c=Number(qc.value);
+  const D=b*b-4*a*c;
+  let res="";
+  if(D>0) {let x1=$(-b+Math.sqrt(D))/(2*a);
+     x2=$(-b-Math.sqrt(D))/(2*a);
+   res="x1=" +x1.toFixed(2) +",x2=" +x2 .toFixed(2);
+  }else if(D===0){ let x= -b/(2*a); res="x"+ x.toFixed(2);
+}else{ let realpart=-b/(2*a);
+  let x1=Math.sqrt(-D)/(2*a);
+  res="x1"+ realpart,toFixed(2) +"+"+imaginarypart.toFixed(2)+"i,x2="+realpart.toFixed(2)+"-"+imaginarypart.toFixed(2)+"i";
+}
+document.getElementById('result').innerText="Result will appear here";
+}
+// MATRIX
+function renderMatrices(){
+  const size = parseInt(document.getElementById("matrixSize").value);
+  const setChoice = document.getElementById("matrixSet").value;
+  let html = "";
+
+  if(setChoice==="A" || setChoice==="AB"){
+    html += '<h4>Matrix A</h4><div class="matrix-grid" style="grid-template-columns:repeat(${size},70px);">';
+    for(let i=0;i<size;i++){
+      for(let j=0;j<size;j++){
+        html+='<input id="A${i}${j}" type="number" style="width:60px;">';
+      }   
+    }
+    html+='</div>';
+  }
+
+  if(setChoice==="B" || setChoice==="AB"){
+    html += '<h4>Matrix B</h4><div class="matrix-grid" style="grid-template-columns:repeat(${size},70px);">';
+    for(let i=0;i<size;i++){
+      for(let j=0;j<size;j++){
+        html+='<input id="B${i}${j}" type="number" style="width:60px;">';
+      }
+    }
+    html+='</div>';
+  }
+
+  document.getElementById("matrixInputs").innerHTML=html;
+}
+
+function getMatrix(prefix){
+  const size = parseInt(document.getElementById("matrixSize").value);
+  let M=[];
+  for(let i=0;i<size;i++){
+    let row=[];
+    for(let j=0;j<size;j++){
+      row.push(Number(document.getElementById(prefix+i+j)?.value||0));
+    }
+    M.push(row);
+  }
+  return M;
+}
+
+function doMatrix(){
+  const setChoice = document.getElementById("matrixSet").value;
+  const op=document.getElementById("matrixOp").value;
+  let res;
+
+  try{
+    let A = (setChoice==="A" || setChoice==="AB") ? getMatrix("A") : null;
+    let B = (setChoice==="B" || setChoice==="AB") ? getMatrix("B") : null;
+
+    if(op==="add") res=math.add(A,B);
+    else if(op==="mul") res=math.multiply(A,B);
+    else if(op==="det") res=math.det(A || B);
+    else if(op==="trans") res=math.transpose(A || B);
+    else if(op==="inv") res=math.inv(A || B);
+    else if(op==="rank") res=math.rank(A || B);
+
+    document.getElementById('result').innerText="Result: "+JSON.stringify(res);
+  }catch(e){
+    document.getElementById('result').innerText="Error: "+e.message;
+  }
+}
+
+// CALCULUS
+function doDerivative(){
+  try{
+    const fn=document.getElementById('cal-fn').value;
+    const d=math.derivative(fn,'x').toString();
+    document.getElementById('result').innerText="f'(x) = "+d;
+  }catch{ document.getElementById('result').innerText="Invalid function"; }
+}
+
+// Default = Basic
+switchMode();
+</script>
+
+</body>
+</html>

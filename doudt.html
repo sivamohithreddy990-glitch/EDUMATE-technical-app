@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EDUMATE</title>
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:Arial}
+body{background:#000;color:#fff;height:100vh;overflow:hidden}
+
+/* Sidebar */
+.sidebar{
+  position:fixed;left:-300px;top:0;width:300px;height:100%;
+  background:#111;padding:15px;transition:.3s;z-index:1000
+}
+.sidebar.active{left:0}
+.new-chat{
+  background:#2563eb;padding:10px;border-radius:8px;
+  text-align:center;cursor:pointer;margin-bottom:15px
+}
+.history div{
+  padding:10px;border-bottom:1px solid #222;
+  cursor:pointer;font-size:14px;color:#ccc
+}
+
+/* Overlay */
+.overlay{
+  position:fixed;top:0;left:0;width:100%;height:100%;
+  background:rgba(0,0,0,.5);display:none;z-index:900
+}
+.overlay.active{display:block}
+
+/* Layout */
+.main{height:100vh;display:flex;flex-direction:column}
+.top-bar{display:flex;align-items:center;padding:15px;gap:10px}
+.menu-btn{
+  width:40px;height:40px;border-radius:50%;
+  background:#1c1c1c;display:flex;align-items:center;
+  justify-content:center;font-size:22px;cursor:pointer
+}
+.title-pill{background:#1c1c1c;padding:8px 18px;border-radius:25px}
+
+/* Chat */
+.chat-area{flex:1;padding:15px;overflow-y:auto}
+.msg{
+  max-width:80%;margin-bottom:10px;padding:10px 14px;
+  border-radius:15px;font-size:14px
+}
+.user{margin-left:auto;background:#2563eb}
+.msg img{max-width:100%;border-radius:10px;margin-top:5px}
+
+/* Input */
+.input-bar{display:flex;gap:10px;padding:10px;position:relative}
+.plus-btn{
+  width:40px;height:40px;border-radius:50%;
+  background:#1c1c1c;display:flex;
+  align-items:center;justify-content:center;
+  font-size:24px;cursor:pointer
+}
+.input-box{
+  flex:1;background:#1c1c1c;border-radius:25px;
+  display:flex;align-items:center;padding:10px 15px;gap:10px
+}
+.input-box input{
+  flex:1;background:transparent;border:none;
+  outline:none;color:#fff
+}
+.send-btn{cursor:pointer}
+
+/* Attachment menu */
+.attach-menu{
+  position:absolute;bottom:60px;left:10px;
+  background:#1c1c1c;border-radius:10px;
+  display:none;flex-direction:column;width:150px
+}
+.attach-menu div{
+  padding:12px;border-bottom:1px solid #333;
+  cursor:pointer;font-size:14px
+}
+.attach-menu div:hover{background:#333}
+
+/* History row */
+.history-row{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+.delete-btn{
+  cursor:pointer;
+  margin-left:10px;
+}
+</style>
+</head>
+
+<body>
+
+<!-- Sidebar -->
+<div class="sidebar" id="sidebar">
+  <div class="new-chat" id="newChat">➕ New Page</div>
+  <div class="history" id="history"></div>
+</div>
+
+<div class="overlay" id="overlay"></div>
+
+<div class="main">
+  <div class="top-bar">
+    <div class="menu-btn" id="menuBtn">☰</div>
+    <div class="title-pill">EDUMATE</div>
+  </div>
+
+  <div class="chat-area" id="chat"></div>
+
+  <div class="input-bar">
+    <div class="plus-btn" id="plusBtn">+</div>
+
+    <div class="attach-menu" id="attachMenu">
+      <div id="cameraBtn">📷 Camera</div>
+      <div id="photoBtn">🖼️ Photo</div>
+    </div>
+
+    <div class="input-box">
+      <input id="question" placeholder="Ask EDUMATE">
+      <div class="send-btn" id="sendBtn">➤</div>
+    </div>
+  </div>
+</div>
+
+<input type="file" id="cameraInput" accept="image/*" capture="environment" hidden>
+<input type="file" id="galleryInput" accept="image/*" hidden>
+<script>
+const API_URL = "AIzaSyDwT3O-aou19YQxOCBYRL56OnMkqgsoBuY"; // backend endpoint
+
+async function sendQuestion(){
+  const text = input.value.trim();
+  if(!text) return;
+
+  // User message
+  const userMsg = document.createElement("div");
+  userMsg.className = "msg user";
+  userMsg.textContent = text;
+  chat.appendChild(userMsg);
+  chat.scrollTop = chat.scrollHeight;
+
+  if(!currentChat.title) currentChat.title = text;
+  currentChat.messages.push(userMsg.outerHTML);
+  saveChats();
+  input.value = "";
+
+  // AI typing indicator
+  const aiMsg = document.createElement("div");
+  aiMsg.className = "msg";
+  aiMsg.textContent = "Typing...";
+  chat.appendChild(aiMsg);
+  chat.scrollTop = chat.scrollHeight;
+
+  try {
+    const res = await fetch(API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ question: text })
+    });
+
+    const data = await res.json();
+    aiMsg.textContent = data.answer || "No response";
+
+    currentChat.messages.push(aiMsg.outerHTML);
+    saveChats();
+  } catch (err) {
+    aiMsg.textContent = "Error connecting to server";
+  }
+}
+</script>
+<script>
+
+/* Sidebar */
+const sidebar = document.getElementById("sidebar");
+const overlay = document.getElementById("overlay");
+const menuBtn = document.getElementById("menuBtn");
+
+menuBtn.onclick = () => {
+  sidebar.classList.toggle("active");
+  overlay.classList.toggle("active");
+};
+overlay.onclick = () => {
+  sidebar.classList.remove("active");
+  overlay.classList.remove("active");
+};
+
+/* Attachments */
+const plusBtn = document.getElementById("plusBtn");
+const attachMenu = document.getElementById("attachMenu");
+const cameraInput = document.getElementById("cameraInput");
+const galleryInput = document.getElementById("galleryInput");
+
+plusBtn.onclick = () => {
+  attachMenu.style.display =
+    attachMenu.style.display === "flex" ? "none" : "flex";
+};
+
+document.getElementById("cameraBtn").onclick = () => cameraInput.click();
+document.getElementById("photoBtn").onclick = () => galleryInput.click();
+
+function handleImage(file){
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    const msg = document.createElement("div");
+    msg.className = "msg user";
+    msg.innerHTML = `<img src="${reader.result}">`;
+    chat.appendChild(msg);
+    chat.scrollTop = chat.scrollHeight;
+
+    currentChat.messages.push(msg.outerHTML);
+    saveChats();
+  };
+  reader.readAsDataURL(file);
+}
+cameraInput.onchange = e => handleImage(e.target.files[0]);
+galleryInput.onchange = e => handleImage(e.target.files[0]);
+
+/* Chat logic */
+const chat = document.getElementById("chat");
+const historyDiv = document.getElementById("history");
+const input = document.getElementById("question");
+const sendBtn = document.getElementById("sendBtn");
+const newChatBtn = document.getElementById("newChat");
+
+let chats = JSON.parse(localStorage.getItem("edumateChats")) || [];
+let currentChat = { id: Date.now(), title:"", messages:[] };
+
+function saveChats(){
+  const i = chats.findIndex(c => c.id === currentChat.id);
+  if(i === -1) chats.push(currentChat);
+  else chats[i] = currentChat;
+  localStorage.setItem("edumateChats", JSON.stringify(chats));
+  renderHistory();
+}
+
+function renderHistory(){
+  historyDiv.innerHTML = "";
+  chats.forEach(c => {
+    const row = document.createElement("div");
+    row.className = "history-row";
+
+    const title = document.createElement("span");
+    title.textContent = c.title || "New Chat";
+    title.onclick = () => loadChat(c.id);
+
+    const del = document.createElement("span");
+    del.textContent = "🗑️";
+    del.className = "delete-btn";
+    del.onclick = (e) => {
+      e.stopPropagation();
+      deleteChat(c.id);
+    };
+
+    row.appendChild(title);
+    row.appendChild(del);
+    historyDiv.appendChild(row);
+  });
+}
+
+function loadChat(id){
+  const c = chats.find(x => x.id === id);
+  if(!c) return;
+  currentChat = c;
+  chat.innerHTML = "";
+  c.messages.forEach(m => {
+    const d = document.createElement("div");
+    d.innerHTML = m;
+    chat.appendChild(d.firstChild);
+  });
+  sidebar.classList.remove("active");
+  overlay.classList.remove("active");
+}
+
+function deleteChat(id){
+  if(!confirm("Delete this chat?")) return;
+  chats = chats.filter(c => c.id !== id);
+  localStorage.setItem("edumateChats", JSON.stringify(chats));
+  if(currentChat.id === id){
+    currentChat = { id: Date.now(), title:"", messages:[] };
+    chat.innerHTML = "";
+  }
+  renderHistory();
+}
+
+function sendQuestion(){
+  const text = input.value.trim();
+  if(!text) return;
+
+  const msg = document.createElement("div");
+  msg.className = "msg user";
+  msg.textContent = text;
+  chat.appendChild(msg);
+  chat.scrollTop = chat.scrollHeight;
+
+  if(!currentChat.title) currentChat.title = text;
+  currentChat.messages.push(msg.outerHTML);
+  saveChats();
+  input.value = "";
+}
+
+sendBtn.onclick = sendQuestion;
+input.addEventListener("keypress", e => {
+  if(e.key === "Enter") sendQuestion();
+});
+
+newChatBtn.onclick = () => {
+  currentChat = { id: Date.now(), title:"", messages:[] };
+  chat.innerHTML = "";
+};
+
+renderHistory();
+</script>
+
+</body>
+</html>

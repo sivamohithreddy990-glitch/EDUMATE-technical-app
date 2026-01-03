@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Speak & Improve - Paryavaran Edition</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body{
+  margin:0;
+  padding:15px;
+  font-family: 'Segoe UI', Arial, sans-serif;
+  background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), url("https://images.unsplash.com/photo-1441974231531-c6227db76b6e") center/cover fixed;
+  color: #333;
+}
+.card{
+  background:rgba(255,255,255,0.98);
+  max-width:650px;
+  margin:10px auto;
+  padding:25px;
+  border-radius:20px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+}
+button, select{
+  width:100%;
+  padding:15px;
+  font-size:16px;
+  margin-top:12px;
+  border-radius:10px;
+  border:none;
+  cursor: pointer;
+  font-weight: bold;
+}
+button{background:#2ecc71; color:white; transition: 0.3s;}
+button:hover{background:#27ae60; transform: translateY(-2px);}
+button:active{transform: scale(0.98);}
+
+textarea{
+  width:100%;
+  height:350px; 
+  font-size:20px;
+  line-height: 1.8;
+  padding:15px;
+  border-radius:12px;
+  border: 2px solid #e0e0e0;
+  background: #fff;
+  resize: none;
+  box-sizing: border-box;
+  font-family: 'Segoe UI', serif;
+  color: #2c3e50;
+  outline: none;
+}
+.hidden{display:none;}
+.top-header{
+  color:white;
+  text-align: center;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+}
+.streak-badge {
+    background: #f39c12;
+    color: white;
+    padding: 6px 18px;
+    border-radius: 25px;
+    display: inline-block;
+    font-weight: bold;
+}
+.timer-box {
+    margin-top: 20px;
+    background: #fff;
+    padding: 10px;
+    border-radius: 10px;
+    font-weight: bold;
+    color: #e74c3c;
+    text-align: center;
+    border: 1px solid #f5c6cb;
+}
+#pageIndicator {
+    font-size: 14px;
+    color: #27ae60;
+    font-weight: bold;
+}
+</style>
+</head>
+
+<body>
+
+<div id="home">
+  <div class="top-header">
+    <h1>READ AND IMPROVE</h1>
+    <p class="streak-badge">🔥 Streak: <span id="streak">0</span> Days</p>
+  </div>
+
+  <div class="card">
+    <h3>Choose Your Language</h3>
+    <select id="lang">
+      <option value="en">English (Environment)</option>
+      <option value="hi">Hindi (पर्यावरण)</option>
+      <option value="te">Telugu (పర్యావరణం)</option>
+      <option value="ta">Tamil (சுற்றுச்சூழல்)</option>
+      <option value="kn">Kannada (ಪರಿಸರ)</option>
+      <option value="ml">Malayalam (പരിസ്ഥിതി)</option>
+    </select>
+    <button onclick="startRead()">📖 Start Practice Session</button>
+    
+    <div class="timer-box">
+        🕒 Next Refresh In: <span id="countdown">00:00</span>
+    </div>
+  </div>
+</div>
+
+<div id="readPage" class="hidden">
+  <div class="card">
+    <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+        <h3 id="pageTitle" style="margin:0;">Reading Practice</h3>
+        <span id="pageIndicator">Page 1/3</span>
+    </div>
+    <textarea id="readText" readonly placeholder="Loading content..."></textarea>
+    
+    <button onclick="nextPage()" id="nextBtn">Next Page ▶</button>
+    
+    <button onclick="goHome()" style="background:#bdc3c7; color:#333; margin-top:10px;">Exit Session</button>
+  </div>
+</div>
+
+<script>
+/* --- TIMER & AUTO-REFRESH LOGIC --- */
+function startCountdown() {
+    setInterval(() => {
+        const now = new Date();
+        const minutes = 59 - now.getMinutes();
+        const seconds = 59 - now.getSeconds();
+        document.getElementById("countdown").innerText = 
+            (minutes < 10 ? "0" + minutes : minutes) + ":" + 
+            (seconds < 10 ? "0" + seconds : seconds);
+        
+        // Refresh page when hour changes to load new content
+        if(minutes === 0 && seconds === 0) location.reload();
+    }, 1000);
+}
+startCountdown();
+
+/* --- STREAK MANAGEMENT --- */
+let streak = Number(localStorage.getItem("streak")) || 0;
+let lastDay = localStorage.getItem("lastDay") || "";
+const today = new Date().toDateString();
+
+if(lastDay !== "" && lastDay !== today) {
+    let yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    if(lastDay !== yesterday.toDateString()) streak = 0;
+}
+document.getElementById("streak").innerText = streak;
+
+/* --- READING LOGIC --- */
+let pageIndex = 0;
+let currentLang = "";
+
+const library = {
+  en: [
+    "Nature is our life support system. It provides us with air, water, and food. To live a healthy life, we must keep our surroundings green and clean.",
+    "Pollution is harming our Earth. We should stop using plastic and start recycling. Every small step helps in saving the environment for our children.",
+    "Protecting the planet is our collective duty. Plant a tree today and save water every day. Let's make the Earth a better place for everyone."
+  ],
+  hi: [
+    "प्रकृति हमारे जीवन का आधार है। यह हमें हवा, पानी और भोजन प्रदान करती है। स्वस्थ जीवन के लिए हमें अपने आसपास के वातावरण को हरा-भरा रखना चाहिए।",
+    "प्रदूषण हमारी पृथ्वी को नुकसान पहुँचा रहा है। हमें प्लास्टिक का उपयोग बंद करना चाहिए और पुनर्चक्रण शुरू करना चाहिए। हर छोटा कदम पर्यावरण बचाने में मदद करता है।",
+    "ग्रह की रक्षा करना हमारा सामूहिक कर्तव्य है। आज एक पेड़ लगाएँ और रोज़ पानी बचाएँ। आइए पृथ्वी को सभी के लिए एक बेहतर स्थान बनाएँ।"
+  ],
+  te: [
+    "ప్రకృతి మన జీవనాధారం. ఇది మనకు గాలి, నీరు మరియు ఆహారాన్ని అందిస్తుంది. ఆరోగ్యకరమైన జీవితం కోసం మన పరిసరాలను పచ్చగా ఉంచుకోవాలి.",
+    "కాలుష్యం మన భూమిని దెబ్బతీస్తోంది. మనం ప్లాస్టిక్ వాడకాన్ని తగ్గించి, రీసైక్లింగ్ ప్రారంభించాలి. ప్రతి చిన్న అడుగు పర్యావరణాన్ని రక్షించడంలో సహాయపడుతుంది.",
+    "భూమిని రక్షించడం మనందరి బాధ్యత. ఈరోజే ఒక మొక్కను నాటండి మరియు నీటిని ఆదా చేయండి. భూమిని అందరికీ నివాసయోగ్యంగా మారుద్దాం."
+  ],
+  ta: [
+    "இயற்கையே நமது உயிர்நாடி. இது நமக்குக் காற்று, நீர் மற்றும் உணவை வழங்குகிறது. ஆரோக்கியமான வாழ்விற்கு நமது சுற்றுப்புறத்தைப் பசுமையாக வைத்திருக்க வேண்டும்.",
+    "மாசுபாடு நமது பூமியைப் பாதிக்கிறது. நாம் பிளாஸ்டிக் பயன்பாட்டைக் குறைத்து மறுசுழற்சி செய்ய வேண்டும். ஒவ்வொரு சிறிய முயற்சியும் சூழலைப் பாதுகாக்க உதவும்.",
+    "பூமியைப் பாதுகாப்பது நமது கூட்டுப் பொறுப்பு. இன்று ஒரு மரம் நட்டு, தினமும் நீரைச் சேமிப்போம். இந்த உலகத்தை அனைவருக்கும் சிறந்த இடமாக மாற்றுவோம்."
+  ],
+  kn: [
+    "ಪ್ರಕೃತಿಯು ನಮ್ಮ ಜೀವನದ ಆಧಾರವಾಗಿದೆ. ಇದು ನಮಗೆ ಗಾಳಿ, ನೀರು ಮತ್ತು ಆಹಾರವನ್ನು ನೀಡುತ್ತದೆ. ನಾವು ನಮ್ಮ ಪರಿಸರವನ್ನು ಹಸಿರಾಗಿ ಮತ್ತು ಸ್ವಚ್ಛವಾಗಿಟ್ಟುಕೊಳ್ಳಬೇಕು.",
+    "ಮಾಲಿನ್ಯವು ಭೂಮಿಗೆ ಹಾನಿ ಮಾಡುತ್ತಿದೆ. ಪ್ಲಾಸ್ಟಿಕ್ ಬಳಕೆಯನ್ನು ನಿಲ್ಲಿಸಿ ಪರಿಸರ ಸ್ನೇಹಿ ವಸ್ತುಗಳನ್ನು ಬಳಸೋಣ. ಪ್ರತಿಯೊಂದು ಸಣ್ಣ ಹೆಜ್ಜೆಯೂ ಪರಿಸರ ಉಳಿಸಲು ಮುಖ್ಯವಾಗಿದೆ.",
+    "ಪರಿಸರ ರಕ್ಷಣೆ ನಮ್ಮೆಲ್ಲರ ಜವಾಬ್ದಾರಿ. ಇಂದು ಒಂದು ಗಿಡ ನೆಡಿ ಮತ್ತು ನೀರನ್ನು ವ್ಯರ್ಥ ಮಾಡಬೇಡಿ. ಈ ಭೂಮಿಯನ್ನು ಎಲ್ಲರಿಗೂ ವಾಸಯೋಗ್ಯವಾಗಿ ಮಾಡೋಣ."
+  ],
+  ml: [
+    "പ്രകൃതി നമ്മുടെ ജീവന്റെ അടിസ്ഥാനമാണ്. ഇത് നമുക്ക് വായുവും വെള്ളവും ഭക്ഷണവും നൽകുന്നു. ആരോഗ്യകരമായ ജീവിതത്തിനായി പരിസരം പച്ചപ്പുള്ളതാക്കി വെക്കുക.",
+    "മലിനീകരണം ഭൂമിയെ നശിപ്പിക്കുന്നു. പ്ലാസ്റ്റിക് ഉപയോഗം ഒഴിവാക്കി പുനരുപയോഗം ശീലമാക്കുക. പരിസ്ഥിതിയെ സംരക്ഷിക്കാൻ ഓരോ ചെറിയ ചുവടും പ്രധാനമാണ്.",
+    "ഭൂമിയെ സംരക്ഷിക്കേണ്ടത് നമ്മുടെ കടമയാണ്. ഇന്ന് ഒരു മരം നടുക, വെള്ളം പാഴാക്കാതിരിക്കുക. നമുക്ക് ഭൂമിയെ എല്ലാവർക്കും അനുയോജ്യമായ ഒരിടമാക്കി മാറ്റാം."
+  ]
+};
+
+function startRead(){
+  currentLang = document.getElementById("lang").value;
+  pageIndex = 0;
+  document.getElementById("home").style.display = "none";
+  document.getElementById("readPage").style.display = "block";
+  loadPage();
+}
+
+function loadPage(){
+  const pages = library[currentLang];
+  document.getElementById("readText").value = pages[pageIndex];
+  document.getElementById("pageIndicator").innerText = `Page ${pageIndex + 1}/3`;
+  
+  if(pageIndex === 2) {
+    document.getElementById("nextBtn").innerText = "Finish & Save Streak ✅";
+  } else {
+    document.getElementById("nextBtn").innerText = "Next Page ▶";
+  }
+}
+
+function nextPage(){
+  if(pageIndex < 2){
+    pageIndex++;
+    loadPage();
+    // Scroll text to top for next page
+    document.getElementById("readText").scrollTop = 0;
+  } else {
+    // End of session
+    if(lastDay !== today){
+      streak++;
+      localStorage.setItem("streak", streak);
+      localStorage.setItem("lastDay", today);
+    }
+    alert("🎉 Excellent! You've completed your hourly practice.");
+    location.reload();
+  }
+}
+
+function goHome(){
+  location.reload();
+}
+</script>
+
+</body>
+</html>

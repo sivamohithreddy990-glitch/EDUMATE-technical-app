@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Edumate - Reminder & Notification</title>
+<link rel="manifest" href="manifest.json">
+<style>
+body { font-family: Arial,sans-serif; background: linear-gradient(to right, #6a11cb, #2575fc); color:#fff; padding:20px;}
+h1 { text-align:center; margin-bottom:20px;}
+.reminder-form, .reminder-list { background: rgba(255,255,255,0.1); padding:20px; border-radius:12px; margin-bottom:25px;}
+label { display:block; margin-top:10px; font-weight:bold;}
+input, textarea, select, button { width:100%; padding:10px; margin-top:5px; border-radius:6px; border:none; font-size:16px;}
+button { background:#ff6b6b; color:#fff; font-weight:bold; cursor:pointer; margin-top:15px; transition:0.3s;}
+button:hover { background:#ff4757;}
+.reminder-card { background: rgba(255,255,255,0.2); padding:12px; border-radius:8px; margin:10px 0; display:flex; justify-content:space-between; align-items:center;}
+.reminder-card.done { opacity:0.6; text-decoration:line-through;}
+.helper-text {font-size:13px; color:#ddd; margin-bottom:5px;}
+</style>
+</head>
+<body>
+
+<h1>📌 Edumate - Reminder & Notification</h1>
+
+<div class="reminder-form">
+<label for="title">Title *</label>
+<input type="text" id="title" placeholder="E.g., Math Homework">
+<div class="helper-text">Enter a short title for your reminder.</div>
+
+<label for="description">Description</label>
+<textarea id="description" placeholder="Optional details..."></textarea>
+<div class="helper-text">Add more info if needed.</div>
+
+<label for="date">Date *</label>
+<input type="date" id="date">
+<div class="helper-text">Pick the reminder date.</div>
+
+<label for="time">Time *</label>
+<input type="time" id="time">
+<div class="helper-text">Select the time to get notified.</div>
+
+<label for="type">Type *</label>
+<select id="type">
+<option value="">-- Select Type --</option>
+<option value="homework">📝 Homework</option>
+<option value="exam">🧪 Exam</option>
+<option value="personal">🎯 Personal</option>
+</select>
+<div class="helper-text">Choose a category for this reminder.</div>
+
+<button onclick="saveReminder()">Save Reminder</button>
+</div>
+
+<div class="reminder-list" id="reminderList"></div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-messaging-compat.js"></script>
+
+<script>
+// 🔑 Replace with your Firebase config
+const firebaseConfig = {
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_PROJECT.firebaseapp.com",
+  projectId: "YOUR_PROJECT",
+  storageBucket: "YOUR_PROJECT.appspot.com",
+  messagingSenderId: "YOUR_SENDER_ID",
+  appId: "YOUR_APP_ID"
+};
+
+firebase.initializeApp(firebaseConfig);
+const messaging = firebase.messaging();
+
+// Ask permission for notifications
+Notification.requestPermission().then(permission => {
+  if(permission === "granted") console.log("Notifications allowed!");
+});
+
+// Register service worker
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('sw.js').then(reg => {
+    messaging.useServiceWorker(reg);
+    console.log('Service Worker registered for notifications');
+  });
+}
+
+// Store reminders in localStorage
+let reminders = JSON.parse(localStorage.getItem("reminders") || "[]");
+displayReminders();
+
+// Save reminder
+function saveReminder(){
+  const title = document.getElementById('title').value.trim();
+  const description = document.getElementById('description').value.trim();
+  const date = document.getElementById('date').value;
+  const time = document.getElementById('time').value;
+  const type = document.getElementById('type').value;
+
+  if(!title || !date || !time || !type){
+    alert("Please fill all required fields!");
+    return;
+  }
+
+  const reminder = {title, description, date, time, type, done:false};
+  reminders.push(reminder);
+  localStorage.setItem("reminders", JSON.stringify(reminders));
+  displayReminders();
+
+  alert("Reminder saved! You will get notification even if the app is closed.");
+  
+  // Here you should send the reminder to your Firebase server
+  // Firebase server will schedule push notification at reminder time
+
+  document.getElementById('title').value = '';
+  document.getElementById('description').value = '';
+  document.getElementById('date').value = '';
+  document.getElementById('time').value = '';
+  document.getElementById('type').value = '';
+}
+
+// Display reminders
+function displayReminders(){
+  const list = document.getElementById('reminderList');
+  list.innerHTML = "";
+  reminders.forEach((rem,index)=>{
+    const card = document.createElement('div');
+    card.className = 'reminder-card' + (rem.done ? ' done':'');
+    card.innerHTML = `
+      <div>
+        <strong>${rem.type}</strong> - ${rem.title}<br>
+        ${rem.description ? rem.description + '<br>':''}
+        ⏰ ${rem.date} ${rem.time}
+      </div>
+      <div>
+        <button onclick="markDone(${index})">✅</button>
+        <button onclick="deleteReminder(${index})">🗑</button>
+      </div>
+    `;
+    list.appendChild(card);
+  });
+}
+
+function markDone(index){ reminders[index].done = true; localStorage.setItem("reminders", JSON.stringify(reminders)); displayReminders();}
+function deleteReminder(index){ reminders.splice(index,1); localStorage.setItem("reminders", JSON.stringify(reminders)); displayReminders();}
+</script>
+</body>
+</html>

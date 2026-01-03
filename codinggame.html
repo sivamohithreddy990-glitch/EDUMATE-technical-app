@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Coding Game – Levels</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 30px 10px;
+      background: #041b29;
+      color: #fff;
+    }
+    .card {
+      max-width: 520px;
+      margin: 0 auto;
+      padding: 20px;
+      border-radius: 18px;
+      background: #06263a;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.7);
+    }
+    h1 {
+      margin-bottom: 10px;
+    }
+    .info {
+      font-size: 14px;
+      margin-top: 4px;
+    }
+    pre {
+      text-align: left;
+      background: #031018;
+      padding: 10px;
+      border-radius: 10px;
+      overflow-x: auto;
+      font-size: 13px;
+      line-height: 1.4;
+      margin-top: 16px;
+    }
+    #question {
+      margin-top: 12px;
+      font-size: 16px;
+      min-height: 40px;
+    }
+    .options {
+      margin-top: 16px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .opt-btn {
+      padding: 9px;
+      border-radius: 10px;
+      border: none;
+      cursor: pointer;
+      font-size: 14px;
+      text-align: left;
+      white-space: normal;
+      min-height: 40px;
+    }
+    #result {
+      margin-top: 14px;
+      font-size: 16px;
+      min-height: 24px;
+    }
+    #explanation {
+      margin-top: 8px;
+      font-size: 14px;
+      opacity: 0.85;
+      min-height: 18px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="card">
+  <h1>Coding Game</h1>
+
+  <p class="info">
+    Level: <span id="level">1</span> |
+    Score: <span id="score">0</span>
+  </p>
+  <p class="info">
+    Correct in this level: <span id="correctLevel">0</span> / <span id="needed">3</span>
+  </p>
+
+  <pre id="codeBlock">
+// Loading code...
+  </pre>
+
+  <div id="question">Loading...</div>
+
+  <div class="options">
+    <button class="opt-btn" id="opt0" onclick="choose(0)"></button>
+    <button class="opt-btn" id="opt1" onclick="choose(1)"></button>
+    <button class="opt-btn" id="opt2" onclick="choose(2)"></button>
+    <button class="opt-btn" id="opt3" onclick="choose(3)"></button>
+  </div>
+
+  <div id="result"></div>
+  <div id="explanation"></div>
+</div>
+
+<script>
+  // ======================
+  // CODING QUESTIONS
+  // ======================
+  // Each question has:
+  // code: code snippet (string)
+  // q:    question text
+  // options: array of 4 answers
+  // answer: index of correct option (0–3)
+  // exp: explanation text
+
+  const codingData = {
+    1: [ // Easy
+      {
+        code: "let x = 2;\nlet y = 3;\nconsole.log(x + y);",
+        q: "What will be printed?",
+        options: ["2", "3", "5", "23"],
+        answer: 2,
+        exp: "2 + 3 = 5, so console.log prints 5."
+      },
+      {
+        code: "let name = \"Sam\";\nconsole.log(\"Hello \" + name);",
+        q: "What will be printed?",
+        options: ["Sam", "Hello", "Hello Sam", "name"],
+        answer: 2,
+        exp: "\"Hello \" + \"Sam\" becomes \"Hello Sam\"."
+      },
+      {
+        code: "let a = 10;\nlet b = 4;\nconsole.log(a - b);",
+        q: "What is the output?",
+        options: ["6", "14", "5", "4"],
+        answer: 0,
+        exp: "10 - 4 = 6."
+      },
+      {
+        code: "let a = 3;\nlet b = 3;\nconsole.log(a * b);",
+        q: "What will console.log show?",
+        options: ["6", "9", "3", "33"],
+        answer: 1,
+        exp: "3 * 3 = 9."
+      }
+    ],
+    2: [ // Medium
+      {
+        code: "let x = 5;\nconsole.log(x++);\nconsole.log(x);",
+        q: "What is the output of the two console.log lines?",
+        options: ["5 then 5", "6 then 6", "6 then 7", "5 then 6"],
+        answer: 3,
+        exp: "x++ returns 5 then x becomes 6. So: 5 then 6."
+      },
+      {
+        code: "let arr = [1, 2, 3];\nconsole.log(arr.length);",
+        q: "What will be printed?",
+        options: ["2", "3", "4", "undefined"],
+        answer: 1,
+        exp: "The array has 3 elements, so length is 3."
+      },
+      {
+        code: "let str = \"Hello\";\nconsole.log(str.toLowerCase());",
+        q: "What is the output?",
+        options: ["HELLO", "Hello", "hello", "error"],
+        answer: 2,
+        exp: "\"Hello\" in lower case is \"hello\"."
+      },
+      {
+        code: "let a = 7;\nif (a > 5) {\n  console.log(\"Big\");\n} else {\n  console.log(\"Small\");\n}",
+        q: "What is printed?",
+        options: ["7", "Big", "Small", "Nothing"],
+        answer: 1,
+        exp: "a is 7 (>5), so \"Big\" is printed."
+      }
+    ],
+    3: [ // Harder
+      {
+        code: "for (let i = 0; i < 3; i++) {\n  console.log(i);\n}",
+        q: "What will be printed?",
+        options: ["0 1 2", "1 2 3", "0 1 2 3", "Only 3"],
+        answer: 0,
+        exp: "Loop prints 0, then 1, then 2."
+      },
+      {
+        code: "function add(a, b = 2) {\n  return a + b;\n}\nconsole.log(add(5));",
+        q: "What is the output?",
+        options: ["2", "5", "7", "undefined"],
+        answer: 2,
+        exp: "b has default 2, so add(5) = 5 + 2 = 7."
+      },
+      {
+        code: "let x = \"5\";\nlet y = 2;\nconsole.log(x + y);",
+        q: "What is printed?",
+        options: ["7", "52", "\"7\"", "\"x + y\""],
+        answer: 1,
+        exp: "String + number becomes string, so \"5\" + 2 = \"52\"."
+      },
+      {
+        code: "let x = 10;\nif (x % 2 === 0) {\n  console.log(\"Even\");\n} else {\n  console.log(\"Odd\");\n}",
+        q: "What will be printed?",
+        options: ["10", "Even", "Odd", "Nothing"],
+        answer: 1,
+        exp: "10 is divisible by 2, so it's Even."
+      }
+    ]
+  };
+
+  let level = 1;
+  const maxLevel = 3;  // update if you add more levels
+  let score = 0;
+  let correctInLevel = 0;
+  const neededPerLevel = 3;
+
+  // For no-repeat questions per level
+  let levelQuestions = [];
+  let questionIndex = 0;
+  let currentQuestion = null;
+
+  const levelSpan        = document.getElementById("level");
+  const scoreSpan        = document.getElementById("score");
+  const correctLevelSpan = document.getElementById("correctLevel");
+  const neededSpan       = document.getElementById("needed");
+  const codeBlockEl      = document.getElementById("codeBlock");
+  const questionEl       = document.getElementById("question");
+  const resultEl         = document.getElementById("result");
+  const explanationEl    = document.getElementById("explanation");
+
+  const optButtons = [
+    document.getElementById("opt0"),
+    document.getElementById("opt1"),
+    document.getElementById("opt2"),
+    document.getElementById("opt3")
+  ];
+
+  neededSpan.textContent = neededPerLevel;
+
+  function shuffleArray(arr) {
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+  }
+
+  function initLevel() {
+    const base = codingData[level];
+    levelQuestions = base.slice();
+    shuffleArray(levelQuestions);
+    questionIndex = 0;
+  }
+
+  function disableAllOptions() {
+    optButtons.forEach(btn => btn.disabled = true);
+  }
+
+  function enableAllOptions() {
+    optButtons.forEach(btn => btn.disabled = false);
+  }
+
+  function newQuestion() {
+    if (level > maxLevel) {
+      codeBlockEl.textContent = "// 🎉 You finished all levels!";
+      questionEl.textContent  = "Game Over.";
+      resultEl.textContent    = "Final score: " + score;
+      explanationEl.textContent = "";
+      disableAllOptions();
+      return;
+    }
+
+    if (questionIndex >= levelQuestions.length) {
+      shuffleArray(levelQuestions);
+      questionIndex = 0;
+    }
+
+    currentQuestion = levelQuestions[questionIndex];
+    questionIndex++;
+
+    codeBlockEl.textContent = currentQuestion.code;
+    questionEl.textContent  = currentQuestion.q;
+    resultEl.textContent    = "";
+    explanationEl.textContent = "";
+
+    currentQuestion.options.forEach((opt, i) => {
+      optButtons[i].textContent = String.fromCharCode(65 + i) + ". " + opt;
+      optButtons[i].disabled = false;
+    });
+  }
+
+  function levelUpIfNeeded() {
+    if (correctInLevel >= neededPerLevel) {
+      level++;
+      correctInLevel = 0;
+      correctLevelSpan.textContent = correctInLevel;
+
+      if (level > maxLevel) {
+        levelSpan.textContent = maxLevel;
+        codeBlockEl.textContent = "// 🎉 You completed all levels!";
+        questionEl.textContent  = "Game Over.";
+        resultEl.textContent    = "Final score: " + score;
+        explanationEl.textContent = "";
+        disableAllOptions();
+        return true;
+      } else {
+        levelSpan.textContent = level;
+        alert("Great! You unlocked Level " + level + " 🔓");
+        initLevel();
+      }
+    }
+    return false;
+  }
+
+  function choose(index) {
+    if (!currentQuestion) return;
+    const correctIndex = currentQuestion.answer;
+
+    disableAllOptions();
+
+    if (index === correctIndex) {
+      // ✅ Only here the player gains score and level progress
+      score++;
+      correctInLevel++;
+      scoreSpan.textContent        = score;
+      correctLevelSpan.textContent = correctInLevel;
+
+      resultEl.textContent =
+        "✅ Correct! Answer is: " + currentQuestion.options[correctIndex];
+      explanationEl.textContent = currentQuestion.exp;
+
+      setTimeout(() => {
+        if (!levelUpIfNeeded()) {
+          newQuestion();
+        }
+      }, 1000);
+    } else {
+      resultEl.textContent =
+        "❌ Wrong! Correct answer is: " + currentQuestion.options[correctIndex];
+      explanationEl.textContent = currentQuestion.exp;
+
+      setTimeout(() => {
+        newQuestion();
+      }, 1000);
+    }
+  }
+
+  // Start game
+  initLevel();
+  newQuestion();
+</script>
+
+</body>
+</html>

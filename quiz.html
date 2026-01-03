@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Quiz Game – Levels (No Repeated Questions in Level)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 30px 10px;
+      background: #120a3a;
+      color: #fff;
+    }
+    .card {
+      max-width: 500px;
+      margin: 0 auto;
+      padding: 20px;
+      border-radius: 18px;
+      background: #1c2454;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.6);
+    }
+    h1 {
+      margin-bottom: 10px;
+    }
+    .info {
+      font-size: 15px;
+      margin-top: 4px;
+    }
+    #question {
+      margin-top: 18px;
+      font-size: 20px;
+      min-height: 50px;
+    }
+    .options {
+      margin-top: 16px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .opt-btn {
+      padding: 10px;
+      border-radius: 10px;
+      border: none;
+      cursor: pointer;
+      font-size: 15px;
+      text-align: left;
+      white-space: normal;
+      min-height: 44px;
+    }
+    #result {
+      margin-top: 16px;
+      font-size: 18px;
+      min-height: 26px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="card">
+  <h1>Quiz Game</h1>
+
+  <p class="info">
+    Level: <span id="level">1</span> |
+    Score: <span id="score">0</span>
+  </p>
+  <p class="info">
+    Correct in this level: <span id="correctLevel">0</span> / <span id="needed">3</span>
+  </p>
+
+  <div id="question">Loading...</div>
+
+  <div class="options">
+    <button class="opt-btn" id="opt0" onclick="choose(0)"></button>
+    <button class="opt-btn" id="opt1" onclick="choose(1)"></button>
+    <button class="opt-btn" id="opt2" onclick="choose(2)"></button>
+    <button class="opt-btn" id="opt3" onclick="choose(3)"></button>
+  </div>
+
+  <p id="result"></p>
+</div>
+
+<script>
+  // ======================
+  // QUIZ DATA PER LEVEL
+  // ======================
+  const quizData = {
+    1: [
+      {
+        q: "What is the capital of India?",
+        options: ["Mumbai", "Delhi", "Chennai", "Kolkata"],
+        answer: 1
+      },
+      {
+        q: "2 + 3 = ?",
+        options: ["4", "5", "6", "7"],
+        answer: 1
+      },
+      {
+        q: "Which one is a fruit?",
+        options: ["Carrot", "Potato", "Apple", "Onion"],
+        answer: 2
+      },
+      {
+        q: "Which day comes after Monday?",
+        options: ["Sunday", "Tuesday", "Friday", "Saturday"],
+        answer: 1
+      }
+    ],
+    2: [
+      {
+        q: "What is the largest planet in our solar system?",
+        options: ["Earth", "Mars", "Jupiter", "Venus"],
+        answer: 2
+      },
+      {
+        q: "What is the boiling point of water (at sea level)?",
+        options: ["50°C", "75°C", "90°C", "100°C"],
+        answer: 3
+      },
+      {
+        q: "Who wrote the national anthem of India?",
+        options: [
+          "Rabindranath Tagore",
+          "Mahatma Gandhi",
+          "Subhash Chandra Bose",
+          "Sarojini Naidu"
+        ],
+        answer: 0
+      },
+      {
+        q: "Which gas do plants absorb from the air?",
+        options: ["Oxygen", "Hydrogen", "Carbon dioxide", "Nitrogen"],
+        answer: 2
+      }
+    ],
+    3: [
+      {
+        q: "Which is the smallest prime number?",
+        options: ["0", "1", "2", "3"],
+        answer: 2
+      },
+      {
+        q: "Who is known as the 'Father of Computers'?",
+        options: [
+          "Albert Einstein",
+          "Charles Babbage",
+          "Isaac Newton",
+          "Nikola Tesla"
+        ],
+        answer: 1
+      },
+      {
+        q: "Which is the longest river in the world?",
+        options: ["Ganga", "Amazon", "Nile", "Yamuna"],
+        answer: 2
+      },
+      {
+        q: "What is the chemical symbol of Gold?",
+        options: ["Ag", "Au", "Gd", "Go"],
+        answer: 1
+      }
+    ]
+  };
+
+  let level = 1;
+  const maxLevel = 3;   // change if you add more levels in quizData
+  let score = 0;
+  let correctInLevel = 0;
+  const neededPerLevel = 3;
+
+  let currentQuestion = null;
+
+  // For "no repeat" per level
+  let currentLevelQuestions = [];
+  let questionIndex = 0; // goes through shuffled list
+
+  const levelSpan = document.getElementById("level");
+  const scoreSpan = document.getElementById("score");
+  const correctLevelSpan = document.getElementById("correctLevel");
+  const neededSpan = document.getElementById("needed");
+  const questionEl = document.getElementById("question");
+  const resultEl = document.getElementById("result");
+
+  const optButtons = [
+    document.getElementById("opt0"),
+    document.getElementById("opt1"),
+    document.getElementById("opt2"),
+    document.getElementById("opt3")
+  ];
+
+  neededSpan.textContent = neededPerLevel;
+
+  // Shuffle helper
+  function shuffleArray(arr) {
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+  }
+
+  // Prepare questions for this level with NO repeats
+  function initLevelQuestions() {
+    const baseQuestions = quizData[level];
+    currentLevelQuestions = baseQuestions.slice(); // copy
+    shuffleArray(currentLevelQuestions);           // random order
+    questionIndex = 0;
+  }
+
+  function newQuestion() {
+    if (level > maxLevel) {
+      questionEl.textContent = "🎉 You finished all levels!";
+      resultEl.textContent = "Game Over. Final score: " + score;
+      disableAllOptions();
+      return;
+    }
+
+    // If we have used all questions in this level once,
+    // reshuffle and start again (repeats only after all are used).
+    if (questionIndex >= currentLevelQuestions.length) {
+      shuffleArray(currentLevelQuestions);
+      questionIndex = 0;
+    }
+
+    currentQuestion = currentLevelQuestions[questionIndex];
+    questionIndex++;
+
+    questionEl.textContent = currentQuestion.q;
+    resultEl.textContent = "";
+
+    currentQuestion.options.forEach((opt, i) => {
+      optButtons[i].textContent = String.fromCharCode(65 + i) + ". " + opt;
+      optButtons[i].disabled = false;
+    });
+  }
+
+  function disableAllOptions() {
+    optButtons.forEach(btn => btn.disabled = true);
+  }
+
+  function levelUpIfNeeded() {
+    if (correctInLevel >= neededPerLevel) {
+      level++;
+      correctInLevel = 0;
+      correctLevelSpan.textContent = correctInLevel;
+
+      if (level > maxLevel) {
+        levelSpan.textContent = maxLevel;
+        questionEl.textContent = "🎉 You completed all levels!";
+        resultEl.textContent = "Game Over. Final score: " + score;
+        disableAllOptions();
+        return true;
+      } else {
+        levelSpan.textContent = level;
+        alert("Great! You unlocked Level " + level + " 🔓");
+        initLevelQuestions(); // new shuffled set for next level
+      }
+    }
+    return false;
+  }
+
+  function choose(index) {
+    if (!currentQuestion) return;
+    const correctIndex = currentQuestion.answer;
+
+    disableAllOptions();
+
+    if (index === correctIndex) {
+      // ✅ Only correct answer gives score + progress
+      score++;
+      correctInLevel++;
+      scoreSpan.textContent = score;
+      correctLevelSpan.textContent = correctInLevel;
+
+      resultEl.textContent =
+        "✅ Correct! The answer is: " +
+        currentQuestion.options[correctIndex];
+
+      setTimeout(() => {
+        if (!levelUpIfNeeded()) {
+          newQuestion();
+        }
+      }, 800);
+    } else {
+      resultEl.textContent =
+        "❌ Wrong! Correct answer is: " +
+        currentQuestion.options[correctIndex];
+
+      setTimeout(() => {
+        newQuestion();
+      }, 800);
+    }
+  }
+
+  // Start game
+  initLevelQuestions();
+  newQuestion();
+</script>
+
+</body>
+</html>

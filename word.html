@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Word Game – Levels (MCQ)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 30px 10px;
+      background: #0a192f;
+      color: #fff;
+    }
+    .card {
+      max-width: 450px;
+      margin: 0 auto;
+      padding: 20px;
+      border-radius: 16px;
+      background: #112240;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.6);
+    }
+    h1 {
+      margin-bottom: 10px;
+    }
+    #scrambled {
+      font-size: 30px;
+      letter-spacing: 4px;
+      margin: 20px 0 10px;
+    }
+    .info {
+      margin-top: 6px;
+      font-size: 15px;
+    }
+    #result {
+      margin-top: 15px;
+      font-size: 18px;
+      min-height: 24px;
+    }
+    #hint {
+      margin-top: 6px;
+      font-size: 14px;
+      opacity: 0.8;
+      min-height: 18px;
+    }
+    .options {
+      margin-top: 15px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .opt-btn {
+      padding: 10px;
+      border-radius: 10px;
+      border: none;
+      cursor: pointer;
+      font-size: 16px;
+      white-space: nowrap;
+    }
+  </style>
+</head>
+<body>
+
+<div class="card">
+  <h1>Word Game</h1>
+
+  <p class="info">
+    Level: <span id="level">1</span> |
+    Score: <span id="score">0</span>
+  </p>
+  <p class="info">
+    Correct in this level: <span id="correctLevel">0</span> / <span id="needed">3</span>
+  </p>
+  <p class="info">
+    Attempts left for this word: <span id="attempts">∞</span>
+  </p>
+
+  <div id="scrambled">Loading...</div>
+  <div id="hint"></div>
+
+  <div class="options">
+    <button class="opt-btn" id="opt0" onclick="choose(0)"></button>
+    <button class="opt-btn" id="opt1" onclick="choose(1)"></button>
+    <button class="opt-btn" id="opt2" onclick="choose(2)"></button>
+    <button class="opt-btn" id="opt3" onclick="choose(3)"></button>
+  </div>
+
+  <p id="result"></p>
+</div>
+
+<script>
+  // Word pools by difficulty
+  const wordsLevel1 = ["cat","dog","sun","book","game","ball","fish"];
+  const wordsLevel2 = ["apple","magic","world","puzzle","train","river","dream"];
+  const wordsLevel3 = ["computer","picture","holiday","monster","diamond","channel"];
+  const wordsHard   = ["elephant","language","mountain","strategy","festival","powder","library"];
+
+  let level = 1;
+  const maxLevel = 5;
+  let score = 0;
+  let correctInLevel = 0;
+  const neededPerLevel = 3;
+
+  let currentWord = "";
+  let attemptsLeft = Infinity;
+  let correctOptionIndex = 0;
+
+  const levelSpan = document.getElementById("level");
+  const scoreSpan = document.getElementById("score");
+  const correctLevelSpan = document.getElementById("correctLevel");
+  const neededSpan = document.getElementById("needed");
+  const attemptsSpan = document.getElementById("attempts");
+  const scrambledEl = document.getElementById("scrambled");
+  const hintEl = document.getElementById("hint");
+  const resultEl = document.getElementById("result");
+
+  const optButtons = [
+    document.getElementById("opt0"),
+    document.getElementById("opt1"),
+    document.getElementById("opt2"),
+    document.getElementById("opt3")
+  ];
+
+  neededSpan.textContent = neededPerLevel;
+
+  function randomFrom(arr) {
+    return arr[Math.floor(Math.random() * arr.length)];
+  }
+
+  function scramble(word) {
+    return word
+      .split("")
+      .sort(() => Math.random() - 0.5)
+      .join("");
+  }
+
+  function getPoolForLevel() {
+    if (level === 1) return wordsLevel1;
+    if (level === 2) return wordsLevel2;
+    if (level === 3) return wordsLevel3;
+    // level 4 & 5: all mixed
+    return wordsLevel1.concat(wordsLevel2, wordsLevel3, wordsHard);
+  }
+
+  function newRound() {
+    if (level > maxLevel) {
+      scrambledEl.textContent = "🎉 You finished all levels!";
+      hintEl.textContent = "";
+      resultEl.textContent = "Game Over. Final score: " + score;
+      disableAllOptions();
+      return;
+    }
+
+    const pool = getPoolForLevel();
+    currentWord = randomFrom(pool);
+
+    // attempts rules
+    if (level <= 3) {
+      attemptsLeft = Infinity;
+      attemptsSpan.textContent = "∞";
+    } else {
+      attemptsLeft = 3;
+      attemptsSpan.textContent = attemptsLeft;
+    }
+
+    // Scrambled display
+    const scr = scramble(currentWord);
+    scrambledEl.textContent = scr.toUpperCase();
+
+    // Hint rules
+    if (level <= 3) {
+      hintEl.textContent = 'Hint: starts with "' + currentWord.charAt(0) + '"';
+    } else if (level === 4) {
+      hintEl.textContent = "Hint: word length is " + currentWord.length + " letters.";
+    } else {
+      hintEl.textContent = ""; // Level 5 no hint
+    }
+
+    // Build 4 options (one correct + 3 wrong)
+    const options = [];
+    options.push(currentWord); // correct
+
+    // Fill with unique wrong words
+    while (options.length < 4) {
+      const w = randomFrom(pool);
+      if (!options.includes(w)) {
+        options.push(w);
+      }
+    }
+
+    // Shuffle options
+    for (let i = options.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [options[i], options[j]] = [options[j], options[i]];
+    }
+
+    correctOptionIndex = options.indexOf(currentWord);
+
+    options.forEach((w, i) => {
+      optButtons[i].textContent = String.fromCharCode(65 + i) + ". " + w;
+      optButtons[i].disabled = false;
+    });
+
+    resultEl.textContent = "";
+  }
+
+  function disableAllOptions() {
+    optButtons.forEach(btn => btn.disabled = true);
+  }
+
+  function levelUpIfNeeded() {
+    if (correctInLevel >= neededPerLevel) {
+      level++;
+      correctInLevel = 0;
+      levelSpan.textContent = level <= maxLevel ? level : maxLevel;
+      correctLevelSpan.textContent = correctInLevel;
+
+      if (level > maxLevel) {
+        scrambledEl.textContent = "🎉 You completed all levels!";
+        hintEl.textContent = "";
+        resultEl.textContent = "Game Over. Final score: " + score;
+        disableAllOptions();
+        return true;
+      } else {
+        alert("Great! You unlocked Level " + level + " 🔓");
+      }
+    }
+    return false;
+  }
+
+  function choose(index) {
+    if (level > maxLevel) return;
+
+    if (attemptsLeft === 0) return;
+
+    if (index === correctOptionIndex) {
+      score++;
+      correctInLevel++;
+      resultEl.textContent = '✅ Correct! The word was "' + currentWord + '".';
+      scoreSpan.textContent = score;
+      correctLevelSpan.textContent = correctInLevel;
+
+      if (!levelUpIfNeeded()) {
+        newRound();
+      }
+    } else {
+      if (attemptsLeft === Infinity) {
+        resultEl.textContent = "❌ Wrong! Try another option.";
+      } else {
+        attemptsLeft--;
+        attemptsSpan.textContent = attemptsLeft;
+
+        if (attemptsLeft <= 0) {
+          resultEl.textContent =
+            '❌ Out of attempts! The word was "' + currentWord + '".';
+          newRound();
+        } else {
+          resultEl.textContent =
+            "❌ Wrong! Attempts left: " + attemptsLeft;
+        }
+      }
+    }
+  }
+
+  // start game
+  newRound();
+</script>
+
+</body>
+</html>

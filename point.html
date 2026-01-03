@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Points Join – Levels</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 30px 10px;
+      background: #1b2735;
+      color: #fff;
+    }
+    .card {
+      max-width: 400px;
+      margin: 0 auto;
+      padding: 20px;
+      border-radius: 16px;
+      background: #243447;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+    }
+    h1 {
+      margin-bottom: 10px;
+    }
+    #question {
+      font-size: 26px;
+      margin: 20px 0;
+    }
+    input {
+      padding: 10px;
+      font-size: 18px;
+      width: 80%;
+      max-width: 200px;
+      border-radius: 8px;
+      border: none;
+      outline: none;
+      text-align: center;
+    }
+    button {
+      margin-top: 15px;
+      padding: 10px 20px;
+      font-size: 18px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+    }
+    .info {
+      margin-top: 15px;
+      font-size: 16px;
+    }
+    #result {
+      margin-top: 15px;
+      font-size: 18px;
+      min-height: 24px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="card">
+  <h1>Points Join</h1>
+  <p class="info">
+    Level: <span id="level">1</span> |
+    Score: <span id="score">0</span>
+  </p>
+  <p class="info">
+    Correct in this level: <span id="correctLevel">0</span> / <span id="needed">3</span>
+  </p>
+
+  <div id="question">Loading...</div>
+
+  <input id="answer" type="number" placeholder="Enter answer" onkeydown="if(event.key==='Enter'){check()}">
+  <br>
+  <button onclick="check()">Submit</button>
+
+  <p id="result"></p>
+</div>
+
+<script>
+  let level = 1;
+  const maxLevel = 5;
+  let score = 0;
+  let correctInLevel = 0;
+  const neededPerLevel = 3;
+  let correctAnswer = 0;
+
+  const levelSpan = document.getElementById("level");
+  const scoreSpan = document.getElementById("score");
+  const correctLevelSpan = document.getElementById("correctLevel");
+  const neededSpan = document.getElementById("needed");
+  const questionEl = document.getElementById("question");
+  const resultEl = document.getElementById("result");
+  const answerInput = document.getElementById("answer");
+
+  neededSpan.textContent = neededPerLevel;
+
+  function randomInt(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+  }
+
+  function newQuestion() {
+    if (level > maxLevel) {
+      questionEl.textContent = "🎉 You finished all levels!";
+      answerInput.disabled = true;
+      return;
+    }
+
+    let a, b, op, text;
+
+    if (level === 1) {
+      // small addition
+      a = randomInt(0, 10);
+      b = randomInt(0, 10);
+      op = "+";
+    } else if (level === 2) {
+      // bigger addition
+      a = randomInt(10, 40);
+      b = randomInt(10, 40);
+      op = "+";
+    } else if (level === 3) {
+      // subtraction (no negative)
+      a = randomInt(10, 40);
+      b = randomInt(0, a);
+      op = "-";
+    } else if (level === 4) {
+      // multiplication
+      a = randomInt(2, 10);
+      b = randomInt(2, 10);
+      op = "×";
+    } else {
+      // level 5: mixed operations, bigger numbers
+      const ops = ["+", "-", "×"];
+      op = ops[randomInt(0, ops.length - 1)];
+      a = randomInt(10, 50);
+      b = randomInt(1, 20);
+      if (op === "-" && b > a) {
+        // ensure non-negative
+        [a, b] = [b, a];
+      }
+    }
+
+    if (op === "+") {
+      correctAnswer = a + b;
+    } else if (op === "-") {
+      correctAnswer = a - b;
+    } else {
+      correctAnswer = a * b;
+    }
+
+    text = `What is ${a} ${op} ${b}?`;
+    questionEl.textContent = text;
+    resultEl.textContent = "";
+    answerInput.value = "";
+    answerInput.focus();
+  }
+
+  function check() {
+    if (level > maxLevel) return;
+
+    const user = answerInput.value;
+    if (user === "") {
+      resultEl.textContent = "Type an answer first.";
+      return;
+    }
+
+    if (parseInt(user, 10) === correctAnswer) {
+      score++;
+      correctInLevel++;
+      resultEl.textContent = "✅ Correct!";
+    } else {
+      resultEl.textContent = "❌ Wrong, the answer was " + correctAnswer;
+    }
+
+    scoreSpan.textContent = score;
+    correctLevelSpan.textContent = correctInLevel;
+
+    if (correctInLevel >= neededPerLevel) {
+      level++;
+      correctInLevel = 0;
+      levelSpan.textContent = level <= maxLevel ? level : maxLevel;
+      correctLevelSpan.textContent = correctInLevel;
+
+      if (level > maxLevel) {
+        resultEl.textContent = "🎉 You completed all levels! Final score: " + score;
+        questionEl.textContent = "Game Over";
+        answerInput.disabled = true;
+        return;
+      } else {
+        alert("Great! You unlocked Level " + level + " 🔓");
+      }
+    }
+
+    newQuestion();
+  }
+
+  // start game
+  newQuestion();
+</script>
+
+</body>
+</html>
