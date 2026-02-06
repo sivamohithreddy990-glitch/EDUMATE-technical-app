@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>B.Tech Study Hub</title>
+<style>
+body{font-family:Poppins,sans-serif;background:#f4f6fb;margin:0;padding:20px;}
+.container{max-width:720px;margin:auto;}
+h1{text-align:center;color:#2563eb;margin-bottom:10px;}
+#search{width:100%;padding:14px;border:none;border-radius:14px;margin:15px 0;font-size:15px;box-shadow:0 6px 15px rgba(0,0,0,0.08);}
+.card{background:white;border-radius:20px;padding:18px;margin:14px 0;box-shadow:0 8px 20px rgba(0,0,0,0.08);transition:0.25s;cursor:pointer;}
+.card:hover{transform:translateY(-4px);}
+.subject-box{text-align:center;}
+.sub-icon{font-size:40px;margin-bottom:6px;}
+.sub-name{font-size:18px;font-weight:600;}
+.units{margin-top:14px;}
+.unit{display:flex;justify-content:space-between;align-items:center;background:#f8fafc;padding:10px 12px;border-radius:10px;margin:8px 0;}
+.unit-left{display:flex;align-items:center;gap:8px;font-weight:600;}
+.unit-icon{font-size:18px;}
+.btn{text-decoration:none;padding:6px 12px;border-radius:8px;font-size:13px;font-weight:600;margin-left:6px;}
+.view{border:2px solid #2563eb;color:#2563eb;}
+.download{background:#2563eb;color:white;}
+.back-btn{display:inline-block;margin-bottom:15px;padding:8px 14px;background:#2563eb;color:white;border-radius:8px;text-decoration:none;}
+</style>
+</head>
+<body>
+
+<div class="container" id="mainPage">
+<h1>📚 B.Tech Study Hub</h1>
+<input type="text" id="search" placeholder="Search subject..." onkeyup="searchSubjects()">
+<div id="subjectList"></div>
+</div>
+
+<div class="container" id="subjectPage" style="display:none;">
+<a href="#" class="back-btn" onclick="showMain()">← Back to Subjects</a>
+<h1 id="subjectTitle"></h1>
+<div id="subjectUnits"></div>
+</div>
+
+<script>
+const subjects = [
+{
+  icon:"☕",
+  name:"Java Programming",
+  units:[
+    {icon:"📘", title:"Unit 1", file:"pdf/java/unit1.pdf"},
+    {icon:"📗", title:"Unit 2", file:"pdf/java/unit2.pdf"},
+    {icon:"📕", title:"Unit 3", file:"pdf/java/unit3.pdf"},
+    {icon:"📙", title:"Unit 4", file:"pdf/java/unit4.pdf"},
+    {icon:"📒", title:"Unit 5", file:"pdf/java/unit5.pdf"},
+    {icon:"📝", title:"Question Bank", file:"pdf/java/questionbank.pdf"}
+  ]
+},
+{
+  icon:"📖",
+  name:"English",
+  units:[
+    {icon:"📘", title:"Unit 1", file:"pdf/english/unit1.pdf"},
+    {icon:"📗", title:"Unit 2", file:"pdf/english/unit2.pdf"},
+    {icon:"📕", title:"Unit 3", file:"pdf/english/unit3.pdf"},
+    {icon:"📙", title:"Unit 4", file:"pdf/english/unit4.pdf"},
+    {icon:"📒", title:"Unit 5", file:"pdf/english/unit5.pdf"},
+    {icon:"📝", title:"Question Bank", file:"pdf/english/questionbank.pdf"}
+  ]
+},
+{
+  icon:"🗄️",
+  name:"DBMS",
+  units:[
+    {icon:"📘", title:"Unit 1", file:"pdf/dbms/unit1.pdf"},
+    {icon:"📗", title:"Unit 2", file:"pdf/dbms/unit2.pdf"},
+    {icon:"📕", title:"Unit 3", file:"pdf/dbms/unit3.pdf"},
+    {icon:"📙", title:"Unit 4", file:"pdf/dbms/unit4.pdf"},
+    {icon:"📒", title:"Unit 5", file:"pdf/dbms/unit5.pdf"},
+    {icon:"📝", title:"Question Bank", file:"pdf/dbms/questionbank.pdf"}
+  ]
+},
+{
+  icon:"💻",
+  name:"OS",
+  units:[
+    {icon:"📘", title:"Unit 1", file:"pdf/os/unit1.pdf"},
+    {icon:"📗", title:"Unit 2", file:"pdf/os/unit2.pdf"},
+    {icon:"📕", title:"Unit 3", file:"pdf/os/unit3.pdf"},
+    {icon:"📙", title:"Unit 4", file:"pdf/os/unit4.pdf"},
+    {icon:"📒", title:"Unit 5", file:"pdf/os/unit5.pdf"},
+    {icon:"📝", title:"Question Bank", file:"pdf/os/questionbank.pdf"}
+  ]
+},
+{
+  icon:"⚡",
+  name:"BEEE",
+  units:[
+    {icon:"📘", title:"Unit 1", file:"pdf/beee/unit1.pdf"},
+    {icon:"📗", title:"Unit 2", file:"pdf/beee/unit2.pdf"},
+    {icon:"📕", title:"Unit 3", file:"pdf/beee/unit3.pdf"},
+    {icon:"📙", title:"Unit 4", file:"pdf/beee/unit4.pdf"},
+    {icon:"📒", title:"Unit 5", file:"pdf/beee/unit5.pdf"},
+    {icon:"📝", title:"Question Bank", file:"pdf/beee/questionbank.pdf"}
+  ]
+},
+{
+  icon:"🏗️",
+  name:"BCME",
+  units:[
+    {icon:"📘", title:"Unit 1", file:"pdf/bcme/unit1.pdf"},
+    {icon:"📗", title:"Unit 2", file:"pdf/bcme/unit2.pdf"},
+    {icon:"📕", title:"Unit 3", file:"pdf/bcme/unit3.pdf"},
+    {icon:"📙", title:"Unit 4", file:"pdf/bcme/unit4.pdf"},
+    {icon:"📒", title:"Unit 5", file:"pdf/bcme/unit5.pdf"},
+    {icon:"📝", title:"Question Bank", file:"pdf/bcme/questionbank.pdf"}
+  ]
+},
+{
+  icon:"🔬",
+  name:"physics",
+  units:[
+    {icon:"📘", title:"Unit 1", file:"pdf/physics/unit1.pdf"},
+    {icon:"📗", title:"Unit 2", file:"pdf/physics/unit2.pdf"},
+    {icon:"📕", title:"Unit 3", file:"pdf/physics/unit3.pdf"},
+    {icon:"📙", title:"Unit 4", file:"pdf/physics/unit4.pdf"},
+    {icon:"📒", title:"Unit 5", file:"pdf/physics/unit5.pdf"},
+    {icon:"📝", title:"Question Bank", file:"pdf/physics/questionbank.pdf"}
+  ]
+},
+{
+  icon:"📊",
+  name:"DISCRETE MATHEMATICS AND GRAPH THEORY",
+  units:[
+    {icon:"📘", title:"Unit 1", file:"pdf/dmgt/unit1.pdf"},
+    {icon:"📗", title:"Unit 2", file:"pdf/dmgt/unit2.pdf"},
+    {icon:"📕", title:"Unit 3", file:"pdf/dmgt/unit3.pdf"},
+    {icon:"📙", title:"Unit 4", file:"pdf/dmgt/unit4.pdf"},
+    {icon:"📒", title:"Unit 5", file:"pdf/dmgt/unit5.pdf"},
+    {icon:"📝", title:"Question Bank", file:"pdf/dmgt/questionbank.pdf"}
+  ]
+},
+{
+  icon:"Ⓜ️",
+  name:"LA&C",
+  units:[
+    {icon:"📘", title:"Unit 1", file:"pdf/lac/unit1.pdf"},
+    {icon:"📗", title:"Unit 2", file:"pdf/lac/unit2.pdf"},
+    {icon:"📕", title:"Unit 3", file:"pdf/lac/unit3.pdf"},
+    {icon:"📙", title:"Unit 4", file:"pdf/lac/unit4.pdf"},
+    {icon:"📒", title:"Unit 5", file:"pdf/lac/unit5.pdf"},
+    {icon:"📝", title:"Question Bank", file:"pdf/lac/questionbank.pdf"}
+  ]
+},
+{
+  icon:"🅲",
+  name:"C Programming",
+  units:[
+    {icon:"📘", title:"Unit 1", file:"pdf/c/unit1.pdf"},
+    {icon:"📗", title:"Unit 2", file:"pdf/c/unit2.pdf"},
+    {icon:"📕", title:"Unit 3", file:"pdf/c/unit3.pdf"},
+    {icon:"📙", title:"Unit 4", file:"pdf/c/unit4.pdf"},
+    {icon:"📒", title:"Unit 5", file:"pdf/c/unit5.pdf"},
+    {icon:"📝", title:"Question Bank", file:"pdf/c/questionbank.pdf"}
+  ]
+}
+];
+
+function loadSubjects(list){
+  const box = document.getElementById("subjectList");
+  box.innerHTML = "";
+  list.forEach((s,index)=>{
+    box.innerHTML += `
+      <div class="card" onclick="openSubject(${index})">
+        <div class="subject-box">
+          <div class="sub-icon">${s.icon}</div>
+          <div class="sub-name">${s.name}</div>
+        </div>
+      </div>
+    `;
+  });
+}
+
+function openSubject(i){
+  const s = subjects[i];
+  document.getElementById("mainPage").style.display = "none";
+  document.getElementById("subjectPage").style.display = "block";
+  document.getElementById("subjectTitle").innerHTML = `${s.icon} ${s.name}`;
+  const unitsHTML = s.units.map(u=>{
+    return `<div class="unit">
+      <div class="unit-left"><span class="unit-icon">${u.icon}</span>${u.title}</div>
+      <div>
+        <a class="btn view" href="${u.file}" target="_blank">View</a>
+        <a class="btn download" href="${u.file}" download>Download</a>
+      </div>
+    </div>`;
+  }).join("");
+  document.getElementById("subjectUnits").innerHTML = unitsHTML;
+}
+
+function showMain(){
+  document.getElementById("subjectPage").style.display = "none";
+  document.getElementById("mainPage").style.display = "block";
+}
+
+function searchSubjects(){
+  const key = document.getElementById("search").value.toLowerCase();
+  const filtered = subjects.filter(s => s.name.toLowerCase().includes(key));
+  loadSubjects(filtered);
+}
+
+loadSubjects(subjects);
+</script>
+</body>
+</html>
